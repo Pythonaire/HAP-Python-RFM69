@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 from pyhap.accessory import Accessory
 from pyhap.const import CATEGORY_SENSOR, CATEGORY_SPRINKLER
-import sqlite3 as sql
-import logging, requests, asyncio, json, socket, threading, time
-from history import FakeGatoHistory
+import logging, requests, json, socket, threading, time
 import config
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
-''' 
-add additional service and characteristics to /usr/local/lib/python3.x/dist-packages/pyhap/ressources
-'''
-
 NODES = config.Config.NODES
 NODE_CACHE = config.Config.NODE_CACHE
+
+'''
+not used today
 
 def send_config(): # send defined nodes to the 433MHz brigde
     ret = None
@@ -23,6 +20,7 @@ def send_config(): # send defined nodes to the 433MHz brigde
         except Exception as e:
             logging.info('**** request to {0} timed out: {1}'.format(config.Config.RFM69_CONFIG, e))
             time.sleep(10)
+'''
 
 def controlrfm(node, cmd):
     httpsend = {node: cmd}
@@ -30,16 +28,13 @@ def controlrfm(node, cmd):
     ret = {}
     try:
         ret = requests.get(config.Config.RFM69_CONTROL, json=json.dumps(httpsend)).json()
-        #rfm return with {'node': "None"} if request failed
-        #if ret[node] == "None":
-        #    ret[node] = 2 # set to 2
         NODE_CACHE[node] = ret[node]
         return ret
     except Exception as e:
         logging.info('**** request to {0} timed out: {1}'.format(config.Config.RFM69_CONTROL, e))
 
 def getCache(node):
-    httpsend = {'node':node} # "?" useless, but needed for dict/json handling
+    httpsend = {'node':node} 
     ret = {}
     while not node in ret:
         try:
@@ -50,67 +45,10 @@ def getCache(node):
             time.sleep(10)
     return ret
 
-async def forwarder(data):
-    try:
-        requests.post(config.Config.RADIO_URL, json=json.dumps(data))
-        logging.info('**** post Temp to Radio {0}'.format(data))
-    except socket.error as e:
-        logging.info('**** request.post to {0} got exception {1}'.format(config.Config.RADIO_URL,e))
-    finally:
-        return '', 200 # make shure, do not produce additional error on sender side
-
-class PhotoVoltaic(Accessory):
-    category = CATEGORY_SENSOR
-    def __init__(self, *args, **kwargs): 
-        super().__init__(*args, **kwargs)
-        self.displayName = args[1] # args[1] contained the device/class Name given
-        self.dbFile = '/home/pwiechmann/smadata/SBFspot.db'
-        self.thisDay = "SELECT max(round(TotalYield, 1)) - min(round(TotalYield,1)) AS power FROM DayData WHERE date(TimeStamp, 'unixepoch') = CURRENT_DATE"
-        self.thisYear = "SELECT max(round(TotalYield, 1)) - min(round(TotalYield,1)) AS power FROM DayData WHERE datetime(TimeStamp, 'unixepoch') > date('now','start of year')"
-        self.set_info_service(firmware_revision='0.0.1', manufacturer=None, model='MacServer SMAInverter', serial_number="MSSMA01")
-        self.Outlet=self.add_preload_service('Outlet', chars = ['Name', 'On','OutletInUse']) 
-        self.PhotoVoltaic = self.add_preload_service('PowerMeter', chars = ['Name', 'CurrentConsumption','TotalConsumption']) 
-        self.Outlet.configure_char('Name', value = 'PhotoVoltaic')
-        self.Outlet.configure_char('On', value=False)
-        self.Outlet.configure_char('OutletInUse', value=False)
-        self.PhotoVoltaic.configure_char('Name', value = 'PhotoVoltaic')
-        self.CurrentConsumption = self.PhotoVoltaic.configure_char('CurrentConsumption', value = self.select_power(self.thisDay))
-        self.TotalConsumption = self.PhotoVoltaic.configure_char('TotalConsumption', value = self.select_power(self.thisYear)/1000)
-        self.HistoryPower = FakeGatoHistory('energy', self)
-
-    def create_connection(self, dbFile):
-        conn = None
-        try:
-            conn = sql.connect(dbFile)
-        except Exception as e:
-            logging.info('** Could not open {0} , err: {1}'.format(dbFile, e))
-        return conn
-
-    def select_power(self, command):
-        conn = self.create_connection(self.dbFile)
-        cur = conn.cursor()
-        cur.execute(command)
-        value = cur.fetchall() # return tuple
-        logging.info('*** get value from SBFSpot : {0} '.format(value[0][0]))
-        cur.close()
-        if value[0][0] == None:
-            power = 0
-        else:
-            power = value[0][0]
-        return power
-
-    @Accessory.run_at_interval(300)
-    def run(self):
-        self.CurrentConsumption.set_value(self.select_power(self.thisDay))
-        self.TotalConsumption.set_value(self.select_power(self.thisYear)/1000)
-
-
-    def stop(self):
-        logging.info('Stopping accessory.')
 
 class Moisture(Accessory):
     category = CATEGORY_SENSOR
-    def __init__(self, node, *args, **kwargs): # Garden sensor nodeNumber 12
+    def __init__(self, node, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = args[1] # args[1] contained the Sensor Name given
         self.node = node # node number of the 433MHz sensor
@@ -124,8 +62,6 @@ class Moisture(Accessory):
         self.BattLevel = Battery.configure_char('BatteryLevel', value = 0)
         self.BattStatus = Battery.configure_char('StatusLowBattery', value = 1)
         Battery.configure_char('ChargingState', value = 2)
-
-        self.HistorySoil = FakeGatoHistory('room', self)
 
     @Accessory.run_at_interval(300)
     def run(self):
@@ -149,9 +85,7 @@ class Moisture(Accessory):
             else:
                 self.BattStatus.set_value(0)
             self.BattLevel.set_value(NodeData["B"])
-        
-        self.HistorySoil.addEntry({'time':int(round(time.time())),'humidity': MoisturePercent, 'temp':0,'ppm':0})
-        
+
     def stop(self):
         logging.info('Stopping accessory.')
 
@@ -180,7 +114,6 @@ class Weather(Accessory):
         self.BattStatus = Battery.configure_char('StatusLowBattery', value = 1)
         Battery.configure_char('ChargingState', value = 2)
 
-        self.HistoryTerrace = FakeGatoHistory('weather', self)
         
     @Accessory.run_at_interval(300)
     def run(self):
@@ -198,9 +131,6 @@ class Weather(Accessory):
         self.AirTemperature.set_value(NodeData["AT"])
         self.AirPressure.set_value(NodeData["AP"])
         self.BattLevel.set_value(NodeData["B"])
-        self.HistoryTerrace.addEntry({'time':int(round(time.time())),'temp':NodeData["AT"],'humidity': NodeData["AH"], 'pressure':NodeData["AP"]})
-        forward = {'Temp': NodeData["AT"]} 
-        asyncio.run(forwarder(forward))
         
     def stop(self):
         logging.info('Stopping accessory.')

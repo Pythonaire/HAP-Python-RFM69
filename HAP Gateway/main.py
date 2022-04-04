@@ -10,26 +10,20 @@ logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 persist_file = 'devices.state'
 
 """
-The bridge mixed up normal devices reached by Wifi etc and RFM69 based devices connected through 433 MHz network.
-Node numbers of RFM69 devices are stored in the config.py Class.
-example:
-NODES = {"Pumpe":11,"Weather":12}
+by importing Devices, the node definitions are loaded, see config.py
+NODES = {"MyNodeName":11,"MyNodeName":12, ....}
 The the dictionary key must refer to the device class, the value is the RFM69 node number to reach the 433MHz connected device.
-While loading/importing Devices, classes and Nodes will be binded 
+with 'loader' own HAP service and characteristics are loaded
 """
 loader = Loader(path_char='CharacteristicDefinition.json',path_service='ServiceDefinition.json')
 
 def get_bridge(driver):
-    bridge = Bridge(driver, 'MacServer')
-    # mixed Devices
-    for item in Devices.NODES:
+    bridge = Bridge(driver, 'MyHAPBridge')
+    for item in Devices.NODES: # load devices/class defined by 'NODES' dictionary in config.py
         DeviceClass = getattr(Devices,item)
         NodeNumber = Devices.NODES[item]
         bridge.add_accessory(DeviceClass(NodeNumber, driver, item))
         logging.info('****** add RFM69 Accessory: {0}, Number: {1} *****'.format(item, NodeNumber))
-    # directly connected devices
-    PVA = Devices.PhotoVoltaic(driver, 'PhotoVoltaic')
-    bridge.add_accessory(PVA)
     SOIL = Devices.Moisture(12, driver, 'Soil Moisture') # needed to be separated because of new eve app
     bridge.add_accessory(SOIL)
     return bridge
