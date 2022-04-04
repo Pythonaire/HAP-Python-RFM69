@@ -12,7 +12,7 @@ The RFM69 devices are in my case Adafruit RFM69HCW Feather boards.
 
 ## Installation
 
-## HAP-Python
+### HAP-Python
 
 To use this fist you need to install the HAP-Python HAP-Python <https://github.com/ikalchev/HAP-python> by:
 
@@ -37,7 +37,7 @@ Each device class call data from the 433MHzBridge in the set interval. The 433MH
 
 At this time, the 433MHzBridge need the node definition too (RFM69.json). The next todo here is to automatically exchange node definitions across the whole implementation.
 
-## 433MHzBridge
+### 433MHzBridge
 
 For the 433MHzBridge you will need Flask.
 
@@ -45,3 +45,5 @@ For the 433MHzBridge you will need Flask.
 sudo pip3 install flask
 
 ```
+
+Additional information in the example folder README. 
