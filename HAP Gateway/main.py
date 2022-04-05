@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, signal, os, time, sys
+import logging, signal, os
 from pyhap.accessory import Bridge
 from pyhap.accessory_driver import AccessoryDriver
 import Devices
@@ -10,21 +10,26 @@ logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 persist_file = 'devices.state'
 
 """
-by importing Devices, the node definitions are loaded, see config.py
-NODES = {"MyNodeName":11,"MyNodeName":12, ....}
+The bridge mixed up normal devices reached by Wifi etc and RFM69 based devices connected through 433 MHz network.
+Node numbers of RFM69 devices are stored in the config.py Class.
+example:
+NODES = {"Pumpe":11,"Weather":12}
 The the dictionary key must refer to the device class, the value is the RFM69 node number to reach the 433MHz connected device.
-with 'loader' own HAP service and characteristics are loaded
+While loading/importing Devices, classes and Nodes will be binded 
 """
 loader = Loader(path_char='CharacteristicDefinition.json',path_service='ServiceDefinition.json')
 
 def get_bridge(driver):
-    bridge = Bridge(driver, 'MyHAPBridge')
-    for item in Devices.NODES: # load devices/class defined by 'NODES' dictionary in config.py
+    bridge = Bridge(driver, 'MacServer')
+    # mixed Devices
+    for item in Devices.NODES:
         DeviceClass = getattr(Devices,item)
         NodeNumber = Devices.NODES[item]
         bridge.add_accessory(DeviceClass(NodeNumber, driver, item))
         logging.info('****** add RFM69 Accessory: {0}, Number: {1} *****'.format(item, NodeNumber))
-    SOIL = Devices.Moisture(12, driver, 'Soil Moisture') # needed to be separated because of new eve app
+    # the SOIL data comes from the same sensor device. But, the Weather service doesnt have soil humidity and
+    # i want to have the history for soil measurements too. Because of that, i set a extra device.
+    SOIL = Devices.Moisture(12, driver, 'Soil Moisture') 
     bridge.add_accessory(SOIL)
     return bridge
 

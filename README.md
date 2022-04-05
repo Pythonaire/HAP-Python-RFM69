@@ -21,7 +21,8 @@ sudo apt-get install libavahi-compat-libdnssd-dev
 pip3 install HAP-python[QRCode]
 ```
 
-Because of Apple changing there Accessory implementation and i like to define my own Accessories, i use my own service and characteristic definitions.
+Because Apple changing there Accessory implementation and i like to define my own Accessories, i use my own service and characteristic definitions.
+@April 2022: some service and characteristic definitions, UI - categories and permissions seems to be de outdated in the HAP-Python repository. If you like to use the newer definitions, copy "const.py" to "/usr/local/lib/python3.x/dist-packages/pyhap" and use "loader" to get the newer definitions. 
 
 ```python
 loader = Loader(path_char='CharacteristicDefinition.json',path_service='ServiceDefinition.json')
