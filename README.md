@@ -10,6 +10,8 @@ This implementation has two parts: The HAP-Python Gateway and a 433MHzBridge to 
 For the HAP Gateway and the the 433MHz Bridge you can use Raspberry Pi's (Zero W, 3B+ 4) or other linux systems like Ubuntu.
 The RFM69 devices are in my case Adafruit RFM69HCW Feather boards.
 
+![Title](fritzing.png "Title")
+
 ## Installation
 
 ### HAP-Python
