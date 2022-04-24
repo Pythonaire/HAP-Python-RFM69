@@ -24,7 +24,7 @@ def send_config(): # send defined nodes to the 433MHz brigde
 
 def controlrfm(node, cmd):
     httpsend = {node: cmd}
-    NODE_CACHE[node] = "None" # set to None, wait for answer
+    NODE_CACHE[node] = None # set to None, wait for answer
     ret = {}
     try:
         ret = requests.get(config.Config.RFM69_CONTROL, json=json.dumps(httpsend)).json()
@@ -119,7 +119,7 @@ class Weather(Accessory):
     def run(self):
         recv = getCache(str(self.node))
         #{'B':Battery,'AT':AirTemperature,'AH':AirHumidity,'AP':AirPressure,SH':SoilHumidity}         
-        if recv[str(self.node)] == None:
+        if recv[str(self.node)] == "None":
             NodeData = {"B": 0, "AT":0, "AH": 0, "AP": 0, "SH":0}
         else: 
             NodeData = recv[str(self.node)]
