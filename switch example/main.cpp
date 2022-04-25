@@ -37,7 +37,7 @@ void state(String s){
     //Serial.println(rpacket);
     memcpy(radiopacket, (const char*)rpacket, sizeof(rpacket));
     // for testing, give the server time to switch between send and receive
-    delay(50); 
+    delay(100); 
     manager.sendto(radiopacket, sizeof(radiopacket), SERVER_ADDRESS);
 };
 

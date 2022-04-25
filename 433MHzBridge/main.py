@@ -7,11 +7,9 @@ from flask import Flask, request
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 file = open("RFM69.json","r")
-RFM69Devices = json.load(file)
+RFM69Devices = json.load(file) # 
 file.close()
-# {"10": "None", "11": "None": "12": None, ...}
-for x, y in RFM69Devices.items(): # convert to python None for easier handling
-    y = None
+# {"11": null: "12": null} --> into python dict value = None
 
 app = Flask(__name__)
 @app.route('/setValue', methods=['POST', 'GET'])
@@ -19,16 +17,26 @@ def setValue():
     global RFM69Devices
     try:
         data = json.loads(request.get_json())
-        keys = list(data)
-        to_node = list(keys)[0]
-        cmd = data[to_node]
-        RFM69Devices[to_node] = None
-        Transceiver.mcu_send(to_node, cmd)
-        res = json.dumps({key: RFM69Devices[key] for key in RFM69Devices.keys() & {to_node}})
-        if RFM69Devices[to_node] == None: # not reached
-             res = json.dumps({to_node:'None'})
-             logging.info('**** no response from {}'.format(res))
-        return res
+        for x, y in data.items():
+            to_node = x
+            cmd = y
+        RFM69Devices[to_node] = None # return None if mcu not react
+        for x in range(2):
+            Transceiver.mcu_send(to_node, cmd)
+            time_start = time.monotonic()
+            time.sleep(0.3) 
+            # minimum 0.3 with RSSI 50
+            # on mcu side 50 ms delay to give the server time between send and receive 
+            #if RFM69Devices[to_node] != None:
+            ack =  json.dumps({key: RFM69Devices[key] for key in RFM69Devices.keys() & {to_node}})
+            time_delta = time.monotonic() - time_start 
+            log = "**** Response {0} from {1} in {2} ms".format(ack, to_node, time_delta)
+            break
+            #else:
+            #ack = json.dumps({to_node:None})
+            #log= "**** no response from {}".format(to_node)
+        logging.info(log)
+        return ack
     except socket.error as e:
         logging.info('**** socket exception: {}'.format(e))
     
@@ -37,14 +45,24 @@ def setValue():
 def cached():
     global RFM69Devices
     try:
-        data = json.loads(request.get_json())
-        keys = list(data)
-        node = list(keys)[0]
+        data = json.loads(request.get_json()) # request a single node
+        node = data['node']
         res = json.dumps({key: RFM69Devices[key] for key in RFM69Devices.keys() & {node}})
         return res
     except Exception as e:
         logging.info('**** socket exception: {}'.format(e))
-    
+
+@app.route('/config', methods=['POST', 'GET'])
+def config():
+    global RFM69Devices
+    try:
+        data = json.loads(request.get_json())
+        nodes = list(data.values())
+        for i in nodes:
+            RFM69Devices[i] = None
+    except Exception as e:
+        logging.info('**** socket exception: {}'.format(e))
+
 class RFMTransceiver():
     RADIO_FREQ_MHZ = 433.0
     CS = digitalio.DigitalInOut(board.CE1)
@@ -71,14 +89,11 @@ class RFMTransceiver():
         io.remove_event_detect(self.dio0_pin)
 
     def mcu_send(self, to_node, cmd):
-        global RFM69Devices
         value = bytes("{}".format(cmd),"UTF-8")
         self.stop_listen() 
         #logging.info("**** send command {0} to node {1} ****".format(cmd, to_node))
         self.rfm69.send(value, int(to_node), self.NODE, 0, 0)
         self.start_listen()
-        time.sleep(0.3) # 100 ms set on mcu
-
 
     def mcu_recv(self, irq):
         global RFM69Devices
