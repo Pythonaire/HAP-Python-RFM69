@@ -6,36 +6,34 @@ from flask import Flask, request
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
-file = open("RFM69.json","r")
-RFM69Devices = json.load(file) # 
-file.close()
+RFM69Devices = {}
 # {"11": null: "12": null} --> into python dict value = None
 
 app = Flask(__name__)
-@app.route('/setValue', methods=['POST', 'GET'])
-def setValue():
+@app.route('/manageState', methods=['POST', 'GET'])
+def manageState():
     global RFM69Devices
     try:
         data = json.loads(request.get_json())
-        for x, y in data.items():
-            to_node = x
-            cmd = y
-        RFM69Devices[to_node] = None # return None if mcu not react
-        for x in range(2):
+        to_node = list(data.keys())[0]
+        cmd = list(data.values())[0]
+        RFM69Devices[to_node] = None # have None if mcu not react
+        end = 2
+        start = 0
+        while start <= end:
             Transceiver.mcu_send(to_node, cmd)
             time_start = time.monotonic()
             time.sleep(0.3) 
-            # minimum 0.3 with RSSI 50
+            # minimum 0.3 with RSSI < 50
             # on mcu side 50 ms delay to give the server time between send and receive 
-            #if RFM69Devices[to_node] != None:
+            # three attempts to reach the sensor
             ack =  json.dumps({key: RFM69Devices[key] for key in RFM69Devices.keys() & {to_node}})
             time_delta = time.monotonic() - time_start 
-            log = "**** Response {0} from {1} in {2} ms".format(ack, to_node, time_delta)
-            break
-            #else:
-            #ack = json.dumps({to_node:None})
-            #log= "**** no response from {}".format(to_node)
-        logging.info(log)
+            info = "**** Response {0} from {1} in {2} ms".format(ack, to_node, time_delta)
+            if RFM69Devices[to_node] != None:
+                break
+            start += 1
+        logging.info(info)
         return ack
     except socket.error as e:
         logging.info('**** socket exception: {}'.format(e))
@@ -48,20 +46,11 @@ def cached():
         data = json.loads(request.get_json()) # request a single node
         node = data['node']
         res = json.dumps({key: RFM69Devices[key] for key in RFM69Devices.keys() & {node}})
+        if len(json.loads(res)) == 0:
+            res = {str(node): None}
         return res
     except Exception as e:
-        logging.info('**** socket exception: {}'.format(e))
-
-@app.route('/config', methods=['POST', 'GET'])
-def config():
-    global RFM69Devices
-    try:
-        data = json.loads(request.get_json())
-        nodes = list(data.values())
-        for i in nodes:
-            RFM69Devices[i] = None
-    except Exception as e:
-        logging.info('**** socket exception: {}'.format(e))
+        logging.info('**** Exception from cached data: {}'.format(e))
 
 class RFMTransceiver():
     RADIO_FREQ_MHZ = 433.0
@@ -123,4 +112,3 @@ if __name__ == '__main__':
     FlaskProcess.daemon = True
     FlaskProcess.start()
     signal.signal(signal.SIGTERM, signal_handler)
-    

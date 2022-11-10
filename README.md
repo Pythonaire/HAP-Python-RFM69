@@ -3,6 +3,8 @@
 
 ![Title](Image1.png "Title")
 
+Connect  RFM69 433 MHz devices with the Apple Homekit.
+
 This implementation has two parts: The HAP-Python Gateway and a 433MHzBridge to requests and receive data to/from 433MHz devices.
 
 ## Equipment
@@ -32,13 +34,12 @@ loader = Loader(path_char='CharacteristicDefinition.json',path_service='ServiceD
 driver = AccessoryDriver(port=51826, persist_file= persist_file, loader=loader)
 ```
 
-Next you need to specify the RFM69 devices in a dictionary, with Node name and node number. See config.py. Note, that the name of your node must be the same as the corresponding HAP-Python device class.
+Next you need to specify the RFM69 bridge and the RFM69 device node number devices in a dictionary, with Node name and node number. See config.py. Note, that the name of your node must be the same as the corresponding HAP-Python device class.
 The main script will read the node definition and load the corresponding device class for further information about the device itself. Each device class represent a HAP Accessory.
 
-In Device.py you can find two examples: a weather sensor and a switch.
+In Device.py you can find two examples: a weather sensor and a switch (here a imension pump)
 Each device class call data from the 433MHzBridge in the set interval. The 433MHzBridge use a Flask server to answer these requests and return sensor values, or send commands to and receive states from the switch.
 
-At this time, the 433MHzBridge need the node definition too (RFM69.json). The next todo here is to automatically exchange node definitions across the whole implementation.
 
 ### 433MHzBridge
 

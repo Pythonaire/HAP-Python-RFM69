@@ -11,12 +11,12 @@ NODE_CACHE: local cache, hold data received from the 433MHzBridge
 
 class Config:
     """Set Flask configuration vars from .env file."""
-    RFM69 = 'XXXX.home'
-    RFM69_CONFIG = 'http://'+ RFM69 + ':8001/config'
-    RFM69_CONTROL = 'http://'+ RFM69 + ':8001/setValue'
-    RFM69_CACHE = url = 'http://' + RFM69 + ':8001/cached'
-    NODES = {"XXXXX":11,"XXXXX":12}
-    NODE_CACHE = {}
+    RFM69Garden = 'XXXX.home' # name of RFM69 bridge or Ip Adresee
+    RFM69Garden_CONTROL = 'http://'+ RFM69Garden + ':8001/setValue' # Flask access point to control a device, here a switch
+    RFM69Garden_CACHE = url = 'http://' + RFM69Garden + ':8001/cached'  # Flask accesspoint to read data cached on the bridge. 
+                                                                        # This is useful for devices in sleep mode, who send periodically values
+    NODES = {"XXXXX":1,"XXXXX":2} # node names and number on the RFM69 network
+    NODE_CACHE = {} # prepare a emty cache
     #create empty cache
     for node in NODES.values(): 
         NODE_CACHE[str(node)] = None
