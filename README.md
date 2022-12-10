@@ -5,7 +5,7 @@
 
 Connect  RFM69 433 MHz devices with the Apple Homekit.
 
-This implementation has two parts: The HAP-Python Gateway and a 433MHzBridge to requests and receive data to/from 433MHz devices.
+This implementation has two parts: The HAP-Python Gateway and a 433MHzBridge to requests and receive data to/from 433MHz devices. The examples here are a simple weather sensor and a switch to control a sprinkler.
 
 ## Equipment
 
