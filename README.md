@@ -51,4 +51,4 @@ sudo pip3 install flask
 ```
 Additional information in the example folder README.
 
-For the sensor/switch devices, i use the "unreliable" RFM69 communication. That means communication without the RFM69 send/wait/ack senquence. This because to save battery capacity. In the exampe weather sensor, the sensor  send values unattended each 30 minutes and go into deep sleep. For the switch, control is more important,  the RFM69 bridge make 4 attempts and wait 300 ms, before state, the switch is unreachable. In my case, through thick wall, plants, obstacles, the response time is allmost around 0.3 seconds.
+For the sensor/switch devices, i use the "unreliable" RFM69 communication. That means communication without the RFM69 send/wait/ack senquence. This because to save battery capacity. In the exampe weather sensor, the sensor  send values unattended each 30 minutes and go into deep sleep. For the switch, control is more important,  the RFM69 bridge make 4 attempts and wait 300 ms, before state, the switch is unreachable. In my case, through thick wall, plants, obstacles, the response time is allmost around 0.05 seconds.
