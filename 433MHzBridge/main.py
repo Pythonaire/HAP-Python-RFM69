@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import board, busio, digitalio, rfm69_driver
 import logging, json, socket, time, signal, sys, threading
 import RPi.GPIO as io
@@ -6,7 +7,6 @@ from flask import Flask, request
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 RFM69Devices = {}
-# {"11": null: "12": null} --> into python dict value = None
 
 app = Flask(__name__)
 @app.route('/manageState', methods=['POST', 'GET'])
@@ -18,25 +18,24 @@ def manageState():
         cmd = list(data.values())[0]
         RFM69Devices[to_node] = None # have None if mcu not react
         attempts = 0
-        ack = None
         time_delta = 0
         while attempts < 4:
             time_start = time.monotonic()
             Transceiver.mcu_send(to_node, cmd)
             time.sleep(0.3) 
+            attempts += 1
             # minimum 0.3 with RSSI < 50
             # on mcu side 50 ms delay to give the server time between send and receive 
             # three attempts to reach the sensor
-            ack =  json.dumps({key: RFM69Devices[key] for key in RFM69Devices.keys() & {to_node}})
+            RFM69Devices[to_node] =  json.dumps({key: RFM69Devices[key] for key in RFM69Devices.keys() & {to_node}})
             time_delta = time.monotonic() - time_start 
             if RFM69Devices[to_node] != None:
                 break
-            attempts += 1
-        logging.info("**** Response {0} from {1} in {2} ms".format(ack, to_node, time_delta))
-        return ack
+        logging.info("**** Response {0} from {1} in {2} s".format(RFM69Devices[to_node], to_node, round(time_delta - attempts*0.3,4)))
+        return RFM69Devices[to_node]
     except socket.error as e:
         logging.info('**** socket exception: {}'.format(e))
-    
+
 
 @app.route('/sync', methods=['POST', 'GET'])
 def sync():
