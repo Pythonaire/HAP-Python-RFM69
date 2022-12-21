@@ -30,7 +30,6 @@ class RFM69Data():
 
     def syncCache(self):
         global RFM69_CACHE
-        #my_dictionary = {k :str(v) for k, v in self.HouseNodes.items()}
         #logging.info("dict: {0}".format(my_dictionary))
         try:
             dict = requests.get(self.GardenUrl, timeout = 2).json()
@@ -51,8 +50,14 @@ class RFM69Data():
         try:
             RFM69_CACHE[node] = requests.get(bridge, json=json.dumps(httpsend), timeout= 2).json()[node]
             #rfm return with json {'node':None} if request failed
-            #NODE_CACHE[node] = answer[node]
         except ConnectTimeout as e:
             logging.info('**** request to {0} timed out: {1}'.format(bridge, e)) 
             RFM69_CACHE[node] = None
+        return RFM69_CACHE[node]
+
+    def stateValues(self, node, val):
+        global RFM69_CACHE
+        state = RFM69_CACHE[node].get(val)
+        if state == None: state = 0
+        return state
 
