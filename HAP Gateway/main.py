@@ -43,17 +43,6 @@ def get_bridge(driver):
         logging.info('****** add RFM69 Accessory: {0}, Number: {1} *****'.format(className, NodeNumber))
     Soil = Devices.Moisture(12, driver, 'Soil Moisture') # needed to be separated because of new eve app
     bridge.add_accessory(Soil)
-    # directly connected devices
-    Panel = Devices.Panel(driver, 'RTC Panel')
-    bridge.add_accessory(Panel)
-    Feed = Devices.Feed(driver, 'RTC Feed')
-    bridge.add_accessory(Feed)
-    Grid = Devices.Grid(driver, 'RTC Grid')
-    bridge.add_accessory(Grid)
-    Consume = Devices.Consume(driver, 'RTC Consume')
-    bridge.add_accessory(Consume)
-    Battery = Devices.Battery(driver, 'RTC Battery')
-    bridge.add_accessory(Battery)
     return bridge
 
 try:
