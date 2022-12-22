@@ -34,21 +34,13 @@ loader = Loader(path_char='CharacteristicDefinition.json',path_service='ServiceD
 def get_bridge(driver):
     bridge = Bridge(driver, 'MacServer')
     # mixed Devices
-    nodes = {}
-    for dict in config.RFMNETWORK.values():
-        for k, v in dict.items():
-            nodes[k] = v
-    #logging.info('**** nodes: {0}'.format(nodes))
-    for item in nodes:
-        DeviceClass = getattr(Devices,item)
-        NodeNumber = nodes[item]
-        bridge.add_accessory(DeviceClass(NodeNumber, driver, item))
-        logging.info('****** add RFM69 Accessory: {0}, Number: {1} *****'.format(item, NodeNumber))
-    #for item in config.NODES_HOUSE:
-    #    DeviceClass = getattr(Devices,item)
-    #    NodeNumber = config.NODES_HOUSE[item]
-    #    bridge.add_accessory(DeviceClass(NodeNumber, driver, item))
-    #    logging.info('****** add RFM69 Accessory: {0}, Number: {1} *****'.format(item, NodeNumber))
+    Nodes = {}
+    for i in list(config.RFMNETWORK.values()):
+        Nodes.update(i)
+    for className, NodeNumber in Nodes.items():
+        DeviceClass = getattr(Devices, className)
+        bridge.add_accessory(DeviceClass(NodeNumber, driver, className))
+        logging.info('****** add RFM69 Accessory: {0}, Number: {1} *****'.format(className, NodeNumber))
     Soil = Devices.Moisture(12, driver, 'Soil Moisture') # needed to be separated because of new eve app
     bridge.add_accessory(Soil)
     # directly connected devices
