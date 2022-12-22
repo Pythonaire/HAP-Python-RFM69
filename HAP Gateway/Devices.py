@@ -4,11 +4,6 @@ from pyhap.const import CATEGORY_SENSOR, CATEGORY_SPRINKLER, CATEGORY_OUTLET
 import CacheData
 import logging, time
 from threading import Timer
-from sys import version_info
-if version_info[0] >2 and version_info[1] > 9:
-    from history310 import FakeGatoHistory
-else:
-    from history import FakeGatoHistory
 #import atexit
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 ''' 
@@ -29,143 +24,6 @@ cancel_future_calls =  CacheData.call_repeatedly(300,  RFM69Data.syncCache)
 
 #atexit.register(exit_handler)
 
-
-class Panel(Accessory):
-    category = CATEGORY_OUTLET
-    def __init__(self, *args, **kwargs): 
-        super().__init__(*args, **kwargs)
-        self.set_info_service(firmware_revision='0.0.1', manufacturer= 'Pythonaire', model='MacServerRTCPanel', serial_number="27102022_005")
-        Panel = self.add_preload_service('PowerMeterPanel', chars = ["CurrentConsumption", "TotalConsumption", "Name", "ResetTotal"])
-        Panel.configure_char('Name', value = 'Panel')
-        Panel.configure_char("ResetTotal", value = time.time() - EPOCH_OFFSET)
-        self.CurrentConsumption = Panel.configure_char('CurrentConsumption', setter_callback = self.getState('PanelCurrentConsumption'))
-        self.TotalConsumption = Panel.configure_char('TotalConsumption', setter_callback = self.getState('PanelTotalConsumption'))
-        self.HistoryPanel = FakeGatoHistory('energy', self)
-
-    def getState(self, value):
-        """Get the state
-        """
-        return RTCData.stateValues(value)
-        
-    @Accessory.run_at_interval(300)
-    async def run(self):
-        self.CurrentConsumption.set_value(self.getState('PanelCurrentConsumption'))
-        self.TotalConsumption.set_value(self.getState('PanelTotalConsumption'))
-        self.HistoryPanel.addEntry({'time':int(time.time()),'power': self.getState('PanelHistory')})
-
-    def stop(self):
-        logging.info('Stopping accessory.')
-
-class Grid(Accessory):
-    category = CATEGORY_OUTLET
-    def __init__(self, *args, **kwargs): 
-        super().__init__(*args, **kwargs)
-        self.set_info_service(firmware_revision='0.0.1', manufacturer= 'Pythonaire', model='MacServerRTCGrid', serial_number="27102022_004")
-        Grid = self.add_preload_service('PowerMeterGrid', chars = ["CurrentConsumption", "TotalConsumption", "Name", "ResetTotal"])
-        Grid.configure_char('Name', value = 'Grid')
-        Grid.configure_char("ResetTotal", value = time.time() - EPOCH_OFFSET)
-        self.CurrentConsumption = Grid.configure_char('CurrentConsumption', setter_callback = self.getState('GridCurrentConsumption'))
-        self.TotalConsumption = Grid.configure_char('TotalConsumption', setter_callback = self.getState('GridTotalConsumption'))
-        self.HistoryGrid = FakeGatoHistory('energy', self)
-
-    def getState(self, value):
-        """Get the state
-        """
-        return RTCData.stateValues(value)
-
-    @Accessory.run_at_interval(300)
-    async def run(self):
-        self.CurrentConsumption.set_value(self.getState('GridCurrentConsumption'))
-        self.TotalConsumption.set_value(self.getState('GridTotalConsumption'))
-        self.HistoryGrid.addEntry({'time':int(time.time()),'power': self.getState('GridHistory')})
-
-    def stop(self):
-        logging.info('Stopping accessory.')
-
-
-class Feed(Accessory):
-    category = CATEGORY_OUTLET
-    def __init__(self, *args, **kwargs): 
-        super().__init__(*args, **kwargs)
-        # Feed negative values
-        self.set_info_service(firmware_revision='0.0.1', manufacturer= 'Pythonaire', model='MacServerRTCFeed', serial_number="27102022_003")
-        Feed = self.add_preload_service('PowerMeterFeed', chars = ["CurrentConsumption", "TotalConsumption", "Name", "ResetTotal"])
-        Feed.configure_char('Name', value = 'Feed')
-        Feed.configure_char("ResetTotal", value = time.time() - EPOCH_OFFSET)
-        self.CurrentConsumption = Feed.configure_char('CurrentConsumption', setter_callback = self.getState('FeedCurrentConsumption'))
-        self.TotalConsumption = Feed.configure_char('TotalConsumption', setter_callback = self.getState('FeedTotalConsumption'))
-        self.HistoryFeed = FakeGatoHistory('energy', self)
-    
-    def getState(self, value):
-        """Get the state
-        """
-        return RTCData.stateValues(value)
-        
-    @Accessory.run_at_interval(300)
-    async def run(self):
-        self.CurrentConsumption.set_value(self.getState('FeedCurrentConsumption'))
-        self.TotalConsumption.set_value(self.getState('FeedTotalConsumption'))
-        self.HistoryFeed.addEntry({'time':int(time.time()),'power': self.getState('FeedHistory')})
-    
-    def stop(self):
-        logging.info('Stopping accessory.')
-
-class Consume(Accessory):
-    category = CATEGORY_OUTLET
-    def __init__(self, *args, **kwargs): 
-        super().__init__(*args, **kwargs)
-        self.set_info_service(firmware_revision='0.0.1', manufacturer= 'Pythonaire', model='MacServerRTCConsume', serial_number="27102022_002")
-        Consume = self.add_preload_service('PowerMeterConsume', chars = ["CurrentConsumption", "TotalConsumption", "Name","ResetTotal"])
-        Consume.configure_char('Name', value = 'Consume')
-        Consume.configure_char("ResetTotal", value = time.time() - EPOCH_OFFSET)
-        self.CurrentConsumption = Consume.configure_char('CurrentConsumption', setter_callback = self.getState('HouseholdCurrentConsumption'))
-        self.TotalConsumption = Consume.configure_char('TotalConsumption', setter_callback = self.getState('HouseholdTotalConsumption'))
-        self.HistoryConsume = FakeGatoHistory('energy', self)
-    
-    def getState(self, value):
-        """Get the state
-        """
-        return RTCData.stateValues(value)
-        
-    @Accessory.run_at_interval(300)
-    async def run(self):
-        self.CurrentConsumption.set_value(self.getState('HouseholdCurrentConsumption'))
-        self.TotalConsumption.set_value(self.getState('HouseholdTotalConsumption'))
-        self.HistoryConsume.addEntry({'time':int(time.time()),'power': self.getState('HouseholdHistory')})
-
-    def stop(self):
-        logging.info('Stopping accessory.')
-        
-class Battery(Accessory):
-    category = CATEGORY_OUTLET
-    def __init__(self, *args, **kwargs): 
-        super().__init__(*args, **kwargs)
-        self.set_info_service(firmware_revision='0.0.1', manufacturer= 'Pythonaire', model='MacServerRTCBattery', serial_number="27102022_001")
-        Battery = self.add_preload_service('PowerMeterBattery', chars = ["CurrentConsumption", "TotalConsumption", "Name", "BatteryLevel", "ChargingState", "ResetTotal"])
-        Battery.configure_char('Name', value = "Battery")
-        self.BatteryLevel = Battery.configure_char('BatteryLevel', setter_callback = self.getState('BatteryPercentage'))
-        self.ChargingState = Battery.configure_char('ChargingState', setter_callback = self.getState('BatteryState'))
-        self.ResetTotal = Battery.configure_char("ResetTotal", value = time.time() - EPOCH_OFFSET)
-        self.CurrentConsumption = Battery.configure_char('CurrentConsumption', setter_callback = self.getState('BatteryCurrentConsumption'))
-        self.TotalConsumption = Battery.configure_char('TotalConsumption', setter_callback = self.getState('BatteryTotalConsumption'))
-        self.HistoryBattery = FakeGatoHistory('energy', self)
-        
-    def getState(self, value):
-        """Get the state
-        """
-        return RTCData.stateValues(value)
-
-    @Accessory.run_at_interval(300)
-    async def run(self):
-        self.BatteryLevel.set_value(self.getState('BatteryPercentage'))
-        self.ChargingState.set_value(self.getState('BatteryState'))
-        self.CurrentConsumption.set_value(self.getState('BatteryCurrentConsumption'))
-        self.TotalConsumption.set_value(self.getState('BatteryTotalConsumption'))
-        self.HistoryBattery.addEntry({'time':int(time.time()),'power': self.getState('BatteryHistory')})
-
-    def stop(self):
-        logging.info('Stopping accessory.')
-
 class Moisture(Accessory):
     category = CATEGORY_SENSOR
     def __init__(self, node, *args, **kwargs): # Garden sensor nodeNumber 12
@@ -179,7 +37,6 @@ class Moisture(Accessory):
         self.BattLevel = Battery.configure_char('BatteryLevel', setter_callback = self.getState('B'))
         self.BattStatus = Battery.configure_char('StatusLowBattery')
         Battery.configure_char('ChargingState', value = 0)
-        self.HistorySoil = FakeGatoHistory('room', self)
 
     def CalcPercentage(self, measured):
         AirValue= 840
@@ -206,7 +63,6 @@ class Moisture(Accessory):
         else:
             self.BattStatus.set_value(0)
         self.BattLevel.set_value(Level)
-        self.HistorySoil.addEntry({'time':int(time.time()),'humidity': self.getState('SH'), 'temp':0,'ppm':0})
 
     def stop(self):
         logging.info('Stopping accessory.')
@@ -230,7 +86,6 @@ class Weather(Accessory):
         self.BattLevel = Battery.configure_char('BatteryLevel', setter_callback = self.getState('B'))
         self.BattStatus = Battery.configure_char('StatusLowBattery')
         Battery.configure_char('ChargingState', value = 0)
-        self.HistoryTerrace = FakeGatoHistory('weather', self)
 
     def getState(self, value):
         """Get the state
@@ -248,9 +103,6 @@ class Weather(Accessory):
             self.BattStatus.set_value(1)
         else:
             self.BattStatus.set_value(0)
-        self.HistoryTerrace.addEntry({'time':int(time.time()),'temp':self.getState('AT'),'humidity': self.getState('AH'), 'pressure':self.getState('AP')})
-        forward = {'Temp': self.getState('AT') } 
-        RFM69Data.forwarder(forward)
         
     def stop(self):
         logging.info('Stopping accessory.')
@@ -334,7 +186,6 @@ class RoomOne(Accessory):
         self.BattLevel = Battery.configure_char('BatteryLevel', setter_callback = self.getState('B'))
         self.BattStatus = Battery.configure_char('StatusLowBattery')
         Battery.configure_char('ChargingState', value = 0)
-        self.HistoryRoomOne = FakeGatoHistory('weather', self)
 
     def getState(self, value):
         """Get the state
@@ -352,7 +203,6 @@ class RoomOne(Accessory):
             self.BattStatus.set_value(1)
         else:
             self.BattStatus.set_value(0)
-        self.HistoryRoomOne.addEntry({'time':int(time.time()),'temp':self.getState("AT"),'humidity': self.getState("AH"), 'pressure':self.getState("AP")})
         
     def stop(self):
         logging.info('Stopping accessory.')
@@ -376,7 +226,7 @@ class RoomTwo(Accessory):
         self.BattLevel = Battery.configure_char('BatteryLevel', setter_callback = self.getState('B'))
         self.BattStatus = Battery.configure_char('StatusLowBattery')
         Battery.configure_char('ChargingState', value = 0)
-        self.HistoryRoomTwo = FakeGatoHistory('weather', self)
+        
         
     def getState(self, value):
         """Get the state
@@ -394,7 +244,6 @@ class RoomTwo(Accessory):
             self.BattStatus.set_value(1)
         else:
             self.BattStatus.set_value(0)
-        self.HistoryRoomTwo.addEntry({'time':int(time.time()),'temp':self.getState("AT"),'humidity': self.getState("AH"), 'pressure':self.getState("AP")})
         
     def stop(self):
         logging.info('Stopping accessory.')
