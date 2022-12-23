@@ -72,7 +72,9 @@ class RFM69Data():
     @classmethod
     def stateValues(cls, node, val):
         global RFM69_CACHE
-        state = RFM69_CACHE[node].get(val)
-        if state == None: state = 0
+        try:
+            state = RFM69_CACHE[node].get(val)
+        except Exception:
+            state = 0
         return state
 
