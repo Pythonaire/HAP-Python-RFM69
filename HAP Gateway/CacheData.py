@@ -19,8 +19,7 @@ def call_repeatedly(interval, func):
                 func()
         threading.Thread(target=loop, daemon=True).start()    
         return stopped.set
-
-
+    
 
 class RFM69Data():
     def __init__(self):   
@@ -61,14 +60,6 @@ class RFM69Data():
             RFM69_CACHE[node] = None
         return RFM69_CACHE[node]
     
-    @classmethod
-    def forwarder(cls, data):
-        try:
-            requests.post(config.RADIO_URL, json=json.dumps(data))
-            logging.info('**** post Temp to Radio {0}'.format(data))
-        except requests.exceptions.ConnectionError as e:
-            logging.info('**** request.post to {0} got exception {1}'.format(config.RADIO_URL,e))
-
     @classmethod
     def stateValues(cls, node, val):
         global RFM69_CACHE
