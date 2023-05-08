@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pyhap.accessory import Accessory
-from pyhap.const import CATEGORY_SENSOR, CATEGORY_SPRINKLER, CATEGORY_OUTLET
+from pyhap.const import CATEGORY_SENSOR, CATEGORY_SPRINKLER
 import CacheData
 import logging, time
 from threading import Timer
