@@ -15,13 +15,6 @@ EPOCH_OFFSET = 978307200
 RFM69Data= CacheData.RFM69Data()
 cancel_future_calls =  CacheData.call_repeatedly(300,  RFM69Data.syncCache)
 
-
-#def exit_handler():
-#    DictSync.set()
-#    logging.info('****** terminate setInterval ********')
-
-#atexit.register(exit_handler)
-
 class Moisture(Accessory):
     category = CATEGORY_SENSOR
     def __init__(self, node, *args, **kwargs): # Garden sensor nodeNumber 12
@@ -31,18 +24,13 @@ class Moisture(Accessory):
         SoilHumidity = self.add_preload_service('HumiditySensor', chars=['Name', 'CurrentRelativeHumidity'])
         SoilHumidity.configure_char('Name', value= 'Soil Humidity')
         self.SoilHumidity = SoilHumidity.configure_char('CurrentRelativeHumidity', setter_callback = self.getState('SH')) # initial
-        Battery = self.add_preload_service("Battery", chars=['ChargingState','StatusLowBattery', 'BatteryLevel'])
-        self.BattLevel = Battery.configure_char('BatteryLevel', setter_callback = self.getState('B'))
-        self.BattStatus = Battery.configure_char('StatusLowBattery')
-        Battery.configure_char('ChargingState', value = 0)
+        self.HistorySoil = FakeGatoHistory('room', self)
 
     def CalcPercentage(self, measured):
         AirValue= 840
         WaterValue= 140
         measured = measured + WaterValue
         if measured > AirValue: measured = AirValue
-        ##if measured < WaterValue: measured = WaterValue
-        #dry = AirValue - WaterValue
         reverse = -measured + AirValue
         return int(round(reverse * 100/AirValue, 2))
 
@@ -55,12 +43,6 @@ class Moisture(Accessory):
     @Accessory.run_at_interval(300)
     async def run(self):
         self.SoilHumidity.set_value(self.getState('SH'))
-        Level = self.getState('B')
-        if Level <=25:
-            self.BattStatus.set_value(1)
-        else:
-            self.BattStatus.set_value(0)
-        self.BattLevel.set_value(Level)
 
     def stop(self):
         logging.info('Stopping accessory.')
@@ -97,10 +79,8 @@ class Weather(Accessory):
         self.AirPressure.set_value(self.getState('AP'))
         Level = self.getState('B')
         self.BattLevel.set_value(Level)
-        if Level <=25:
-            self.BattStatus.set_value(1)
-        else:
-            self.BattStatus.set_value(0)
+        self.BattStatus.set_value(1) if Level <=25 else self.BattStatus.set_value(0)
+        self.HistoryTerrace.addEntry({'time':int(time.time()),'temp':self.getState('AT'),'humidity': self.getState('AH'), 'pressure':self.getState('AP')})
         
     def stop(self):
         logging.info('Stopping accessory.')
@@ -119,7 +99,7 @@ class Pumpe(Accessory):
         self.rem_duration = Valve.configure_char('RemainingDuration', value = 0)
         self.StatusFault = Valve.configure_char('StatusFault', value = 0)
         self.ValveInUse = Valve.configure_char('InUse', value = 0)
-        self.ValveActive = Valve.configure_char('Active', value = self.getState(2))
+        self.ValveActive = Valve.configure_char('Active', value = self.initialState(2))
         
         self.ValveActive.setter_callback = self.control
 
@@ -129,8 +109,8 @@ class Pumpe(Accessory):
         Active=1, InUse=1 -> Running
         Active=0, InUse=1 -> Stopping
         '''
-    def getState(self, val):
-        """Get the state
+    def initialState(self, val):
+        """Get the initial state
         """
         answer = RFM69Data.controlrfm(self.node, val) # get the switch state
         if answer != None:
@@ -139,6 +119,17 @@ class Pumpe(Accessory):
         else:
             self.StatusFault.set_value(1)
         return answer
+    
+    def getState(self,val):
+        """Get the running state
+        """
+        answer = RFM69Data.controlrfm(self.node, val) # get the switch state
+        if answer != None:
+            self.StatusFault.set_value(0)
+            self.ValveActive.set_value(answer)
+            self.ValveInUse.set_value(answer)
+        else:
+            self.StatusFault.set_value(1)
 
     def close(self):
         self.ValveActive.set_value(0)
@@ -163,7 +154,6 @@ class Pumpe(Accessory):
         else:
             self.close()
                 
-
 
 class RoomOne(Accessory):
     category = CATEGORY_SENSOR
@@ -224,7 +214,7 @@ class RoomTwo(Accessory):
         self.BattLevel = Battery.configure_char('BatteryLevel', setter_callback = self.getState('B'))
         self.BattStatus = Battery.configure_char('StatusLowBattery')
         Battery.configure_char('ChargingState', value = 0)
-        
+        self.HistoryRoomTwo = FakeGatoHistory('weather', self)
         
     def getState(self, value):
         """Get the state
@@ -237,11 +227,8 @@ class RoomTwo(Accessory):
         self.AirHumidity.set_value(self.getState('AH'))
         self.AirPressure.set_value(self.getState('AP'))
         Level = self.getState('B')
+        self.BattStatus.set_value(1) if Level <=25 else self.BattStatus.set_value(0)
         self.BattLevel.set_value(Level)
-        if Level <=25:
-            self.BattStatus.set_value(1)
-        else:
-            self.BattStatus.set_value(0)
         
     def stop(self):
         logging.info('Stopping accessory.')
