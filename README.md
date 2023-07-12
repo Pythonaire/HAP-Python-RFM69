@@ -3,14 +3,14 @@
 
 ![Title](Image1.png "Title")
 
-Bridge RFM69 433 MHz devices with the Apple Homekit. To get sensor data or control for examle switches, small data packets needed to be exchange. The coverage of a 433 MHz network is more effective then a wifi network. Sensors can work with small batteries over years.  
+Bridge data from a RFM69 433 MHz devices to the Apple Homekit. To get sensor data or control for examle switches, small data packets needed to be exchange. The coverage of a 433 MHz network is more effective then a Wifi, Bluetooth or Zwave/ZigBee networks. And sensors can work with small batteries over years.  
 
 This implementation has two parts: The Homekit Gateway and a RFM69 Bridge to requests and receive data to/from 433MHz devices. The examples here are a simple weather sensor, capacitive soil moisture sensor, room sensors and a switch to control a sprinkler.
 
 ## Equipment
 
 For the Homekit Gateway and the RFM69 Bridge,  you can use Raspberry Pi's (Zero W, 3B+ 4) or any other linux systems.
-The RFM69 sensor/switch devices itself, in my case is a Adafruit RFM69HCW Feather board.
+The RFM69 sensor/switch devices itself, in my case, is a Adafruit RFM69HCW Feather board.
 
 ![Title](fritzing.png "Title")
 
@@ -18,7 +18,7 @@ The RFM69 sensor/switch devices itself, in my case is a Adafruit RFM69HCW Feathe
 
 ### HAP-Python
 
-To use this fist you need to install the HAP-Python HAP-Python <https://github.com/ikalchev/HAP-python> by:
+To use this, first you need to install the HAP-Python HAP-Python <https://github.com/ikalchev/HAP-python> by:
 
 ```python
 sudo apt-get install libavahi-compat-libdnssd-dev
@@ -34,11 +34,12 @@ loader = Loader(path_char='CharacteristicDefinition.json',path_service='ServiceD
 driver = AccessoryDriver(port=51826, persist_file= persist_file, loader=loader)
 ```
 
-Next you need to specify the RFM69 bridge and the RFM69 device node number devices in a dictionary, with Node name and node number. See config.py. Note, that the name of your node must be the same as the corresponding HAP-Python device class.
-The main script will read the node definition and load the corresponding device class for further information about the device itself. Each device class represent a HAP Accessory.
+Next you need to specify the RFM69 bridge and the RFM69 device node number devices in a dictionary, with node name and node number. See config.py. Note, that the name of your node must be the same as the corresponding HAP-Python device class.
+The main script will read the node definition and load the corresponding device class for further operation. Each device class represent a HAP Accessory.
 
-In Device.py you can find two examples: a weather sensor and a switch (here a imension pump)
-Each device class call data from the 433MHzBridge in the set interval. The 433MHzBridge use a Flask server to answer these requests and return sensor values, or send commands to and receive states from the switch.
+In Device.py you can find examples: a weather sensor, a room sensor and a switch (here a immension pump)
+
+The device classes calling data from the 433MHzBridge in a interval or in case of the switch directly. The 433MHzBridge use a Flask server to answer these requests and return sensor values, or send commands to and receive states from the switch.
 
 
 ### 433MHzBridge
