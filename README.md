@@ -3,7 +3,7 @@
 
 ![Title](Image1.png "Title")
 
-Bridge data from a RFM69 433 MHz devices to the Apple Homekit. To get sensor data or control for examle switches, small data packets needed to be exchange. The coverage of a 433 MHz network is more effective then a Wifi, Bluetooth or Zwave/ZigBee networks. And sensors can work with small batteries over years.  
+Bridge data from a RFM69 433 MHz devices from or to the Apple Homekit. To get sensor data or control for examle switches, small data packets needed to be exchange. The coverage of a 433 MHz network is more effective then a Wifi, Bluetooth or Zwave/ZigBee networks. And sensors can work with small batteries over years.  
 
 This implementation has two parts: The Homekit Gateway and a RFM69 Bridge to requests and receive data to/from 433MHz devices. The examples here are a simple weather sensor, capacitive soil moisture sensor, room sensors and a switch to control a sprinkler.
 
