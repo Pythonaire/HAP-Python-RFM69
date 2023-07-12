@@ -45,7 +45,7 @@ class Moisture(Accessory):
 
     def stop(self):
         logging.info('Stopping accessory.')
-
+        
 class Weather(Accessory):
     category = CATEGORY_SENSOR
     def __init__(self, node, *args, **kwargs): # Garden sensor nodeNumber 12
