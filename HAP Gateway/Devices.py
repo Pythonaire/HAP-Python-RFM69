@@ -24,7 +24,6 @@ class Moisture(Accessory):
         SoilHumidity = self.add_preload_service('HumiditySensor', chars=['Name', 'CurrentRelativeHumidity'])
         SoilHumidity.configure_char('Name', value= 'Soil Humidity')
         self.SoilHumidity = SoilHumidity.configure_char('CurrentRelativeHumidity', setter_callback = self.getState('SH')) # initial
-        self.HistorySoil = FakeGatoHistory('room', self)
 
     def CalcPercentage(self, measured):
         AirValue= 840
@@ -80,7 +79,6 @@ class Weather(Accessory):
         Level = self.getState('B')
         self.BattLevel.set_value(Level)
         self.BattStatus.set_value(1) if Level <=25 else self.BattStatus.set_value(0)
-        self.HistoryTerrace.addEntry({'time':int(time.time()),'temp':self.getState('AT'),'humidity': self.getState('AH'), 'pressure':self.getState('AP')})
         
     def stop(self):
         logging.info('Stopping accessory.')
@@ -214,7 +212,6 @@ class RoomTwo(Accessory):
         self.BattLevel = Battery.configure_char('BatteryLevel', setter_callback = self.getState('B'))
         self.BattStatus = Battery.configure_char('StatusLowBattery')
         Battery.configure_char('ChargingState', value = 0)
-        self.HistoryRoomTwo = FakeGatoHistory('weather', self)
         
     def getState(self, value):
         """Get the state
