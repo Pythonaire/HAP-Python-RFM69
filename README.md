@@ -26,7 +26,7 @@ pip3 install HAP-python[QRCode]
 ```
 
 I like to define my own accessories, so i use my own service and characteristic definitions.
-Some service and characteristic definitions, categories and permissions seems to be de outdated in the HAP-Python repository. If you like to use the newer definitions, copy "const.py" to "/usr/local/lib/python3.x/dist-packages/pyhap" and use "loader" to get the newer definitions.(state October 2022)
+Some service and characteristic definitions, categories and permissions seems to be de outdated in the HAP-Python repository. If you like to use the newer definitions, copy "const.py" to your prefered path and use "loader" to get the newer definitions.(state October 2022)
 
 ```python
 loader = Loader(path_char='CharacteristicDefinition.json',path_service='ServiceDefinition.json')
